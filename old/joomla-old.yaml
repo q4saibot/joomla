@@ -1,0 +1,108 @@
+version: "3.8"
+
+services:
+
+  mariadb:
+
+    image: q4saibot/mariadb:my
+
+    networks:
+      - cabinet
+    hostname: "mariadb"
+    ports:
+      - "3306:3306"
+
+    volumes:
+      - mariadb:/var/lib/mysql
+
+    environment:
+      MYSQL_ROOT_PASSWORD: Fk3iWdDHFMvnVnx29qREkrtRRrrMZHEXdxcqxbzWjNoiA3YTyfr3mvLLNiPtKhKW
+      MYSQL_USER: jooml
+      MYSQL_PASSWORD: xbjnX7SMUfS9o3uDpfccHQHrTQSP3xXP9CmnFAQXHYDjmg3VodiYi4ScrFKgeqVR
+      MYSQL_DATABASE: joomla_my
+
+  joomla:
+    image: q4saibot/joomla:my
+    depends_on:
+      - mariadb
+
+    networks:
+      - cabinet
+    hostname: "joomla"
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - apache:/etc/apache2
+      - php:/usr/local/etc/php
+      - ssl:/etc/ssl
+      - joomla:/var/www/html
+
+    environment:
+      JOOMLA_DB_HOST: mariadb
+      JOOMLA_DB_NAME: joomla_my
+      JOOMLA_DB_USER: joomla
+      JOOMLA_DB_PASSWORD: xbjnX7SMUfS9o3uDpfccHQHrTQSP3xXP9CmnFAQXHYDjmg3VodiYi4ScrFKgeqVR
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      start_period: 1m
+      interval: 1m
+      timeout: 20s
+      retries: 3
+
+  myadmin:
+    image: q4saibot/myadmin:my
+    depends_on:
+      - mariadb
+
+    networks:
+      - cabinet
+    hostname: myadmin
+    ports:
+      - "8080:80"
+
+    volumes:
+      - myadmin:/var/www/html
+      - myadminapache:/etc/apache2
+      - myadminphpini:/usr/local/etc/php
+
+    environment:
+      PMA_HOST: mariadb
+      PMA_USER: root
+      PMA_PASSWORD: Fk3iWdDHFMvnVnx29qREkrtRRrrMZHEXdxcqxbzWjNoiA3YTyfr3mvLLNiPtKhKW
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      start_period: 1m
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+
+networks:
+  cabinet:
+      driver: bridge
+
+
+volumes:
+  mariadb:
+    name: MariaDB
+
+  myadmin:
+    name: MyAdmin
+  myadminapache:
+    name: MyAdmin.apache2
+  myadminphpini:
+    name: MyAdmin.php.ini
+
+  apache:
+    name: Apache2
+  ssl:
+    name: Apache2.ssl
+  php:
+    name: Apache2.php
+
+  joomla:
+    name: Joomla4

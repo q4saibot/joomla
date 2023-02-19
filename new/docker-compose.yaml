@@ -1,0 +1,75 @@
+version: '3.9'
+
+
+services:
+
+    www:
+        container_name: Joomla4
+
+        image: joomla
+        depends_on:
+            - sql
+
+        networks:
+            - frontend
+        ports:
+            - "80:80"
+            - "443:443"
+
+        volumes:
+            - joomla:/var/www/html
+            - apache:/etc/apache2
+            - phpini:/usr/local/etc/php
+
+    sql:
+        container_name: MariaDB
+
+        image: mariadb
+
+        networks:
+            - frontend
+        ports:
+            - "3306:3306"
+
+        volumes:
+            - mariadb:/var/lib/mysql
+
+    adm:
+        container_name: MyAdmin
+
+        image: phpmyadmin
+        depends_on:
+            - sql
+
+        networks:
+            - frontend
+        ports:
+            - "8080:80"
+
+
+networks:
+
+    frontend:
+        name: Frontend
+        driver: bridge
+    backend:
+        name: Backend
+        driver: bridge
+
+
+volumes:
+
+    joomla:
+        name: Joomla4
+
+    mariadb:
+        name: MariaDB
+
+    myadmin:
+        name: MyAdmin
+
+    apache:
+        name: Apache2
+
+    phpini:
+        name: PHP.ini
