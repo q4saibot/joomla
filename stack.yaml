@@ -1,0 +1,96 @@
+version: '3.9'
+
+
+services:
+
+    www:
+        container_name: Joomla4
+
+        image: joomla
+        depends_on:
+            - sql
+
+        networks:
+            - joomla
+        ports:
+            - "80:80"
+            - "443:443"
+
+        volumes:
+            - joomla:/var/www/html
+            - apache:/etc/apache2
+            - phpini:/usr/local/etc/php
+
+        environment:
+            - JOOMLA_DB_HOST=sql
+            - JOOMLA_DB_NAME=joomla
+            - JOOMLA_DB_USER=joomla
+            - JOOMLA_DB_PASSWORD=3Tex7SggvMbX
+
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost"]
+            start_period: 1m
+            interval: 1m
+            timeout: 20s
+            retries: 3
+
+    sql:
+        container_name: MariaDB
+
+        image: mariadb
+
+        networks:
+            - joomla
+        ports:
+            - "3306:3306"
+
+        volumes:
+            - mariadb:/var/lib/mysql
+        
+        env_file:
+            - stack.env
+
+
+    adm:
+        container_name: MyAdmin
+
+        image: phpmyadmin
+        depends_on:
+            - sql
+
+        networks:
+            - joomla
+        ports:
+            - "8080:80"
+
+        profiles:
+            - debug
+
+        environment:
+            - PMA_HOST=sql
+            - PMA_USER=root
+            - PMA_PASSWORD=ro5TAcrhRwrTzAfA
+
+networks:
+
+    joomla:
+        name: Joomla
+        driver: bridge
+
+
+volumes:
+
+    joomla:
+        name: Joomla4
+
+    mariadb:
+        name: MariaDB
+
+    myadmin:
+        name: MyAdmin
+
+    apache:
+        name: Apache2
+
+    phpini:
+        name: PHP.ini
