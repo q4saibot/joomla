@@ -1,3 +1,5 @@
+name: joomla
+
 services:
 
     www:
@@ -5,7 +7,8 @@ services:
 
         image: joomla
         depends_on:
-            - sql
+            sql:
+                condition: service_healthy
 
         networks:
             - joomla
@@ -18,15 +21,16 @@ services:
             - apache:/etc/apache2
             - phpini:/usr/local/etc/php
 
+        env_file: stack.env
+
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost"]
-            start_period: 1m
+            test: ["CMD", "curl", "--head", "--fail", "http://localhost"]
+            start_period: 30s
             interval: 1m
             timeout: 20s
             retries: 3
-
-        env_file:
-            - stack.env
+        
+        restart: always
 
     sql:
         container_name: MariaDB
@@ -35,15 +39,22 @@ services:
 
         networks:
             - joomla
-        ports:
-            - "3306:3306"
+        expose:
+            - "3306"
 
         volumes:
             - mariadb:/var/lib/mysql
         
-        env_file:
-            - stack.env
+        env_file: stack.env
 
+        healthcheck:
+            test: ["CMD", "mariadb-admin", "--user=root", "--password=${MARIADB_ROOT_PASSWORD}", "ping"]
+            start_period: 30s
+            interval: 1m
+            timeout: 10s
+            retries: 3
+
+        restart: always
 
     adm:
         container_name: MyAdmin
@@ -58,10 +69,12 @@ services:
             - "8080:80"
 
         profiles:
+            - admin
             - debug
 
-        env_file:
-            - stack.env
+        env_file: stack.env
+
+        restart: always
 
 networks:
 
